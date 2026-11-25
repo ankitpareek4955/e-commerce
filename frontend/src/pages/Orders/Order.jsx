@@ -36,7 +36,7 @@ const Order = () => {
   } = useGetPaypalClientIdQuery();
 
   useEffect(() => {
-    if (!errorPayPal && !loadingPaPal && paypal.clientId) {
+    if (!errorPayPal && !loadingPaPal && paypal?.clientId) {
       const loadingPaPalScript = async () => {
         paypalDispatch({
           type: "resetOptions",
@@ -59,11 +59,11 @@ const Order = () => {
   function onApprove(data, actions) {
     return actions.order.capture().then(async function (details) {
       try {
-        await payOrder({ orderId, details });
+        await payOrder({ orderId, details }).unwrap();
         refetch();
         toast.success("Order is paid");
       } catch (error) {
-        toast.error(error?.data?.message || error.message);
+        toast.error(error?.data?.message || error?.error || error.message);
       }
     });
   }
@@ -71,7 +71,9 @@ const Order = () => {
   function createOrder(data, actions) {
     return actions.order
       .create({
-        purchase_units: [{ amount: { value: order.totalPrice } }],
+        purchase_units: [
+          { amount: { value: Number(order.totalPrice).toFixed(2) } },
+        ],
       })
       .then((orderID) => {
         return orderID;
@@ -79,8 +81,28 @@ const Order = () => {
   }
 
   function onError(err) {
-    toast.error(err.message);
+    toast.error(err?.message || "PayPal payment could not be completed");
   }
+
+  const demoPayHandler = async () => {
+    try {
+      await payOrder({
+        orderId,
+        details: {
+          id: `DEMO-${Date.now()}`,
+          status: "COMPLETED",
+          update_time: new Date().toISOString(),
+          payer: {
+            email_address: order?.user?.email || userInfo?.email || "",
+          },
+        },
+      }).unwrap();
+      refetch();
+      toast.success("Order is paid (Demo)");
+    } catch (error) {
+      toast.error(error?.data?.message || error?.error || "Payment failed");
+    }
+  };
 
   const deliverHandler = async () => {
     await deliverOrder(orderId);
@@ -196,10 +218,10 @@ const Order = () => {
         {!order.isPaid && (
           <div>
             {loadingPay && <Loader />}{" "}
-            {isPending ? (
-              <Loader />
-            ) : (
-              <div>
+            {paypal?.clientId ? (
+              isPending ? (
+                <Loader />
+              ) : (
                 <div>
                   <PayPalButtons
                     createOrder={createOrder}
@@ -207,8 +229,25 @@ const Order = () => {
                     onError={onError}
                   ></PayPalButtons>
                 </div>
+              )
+            ) : (
+              <div className="mb-3">
+                <Messsage variant="danger">
+                  PayPal Client ID is not configured on the server. Use Demo
+                  Checkout below to test order payment.
+                </Messsage>
               </div>
             )}
+            <button
+              type="button"
+              onClick={demoPayHandler}
+              disabled={loadingPay}
+              className="bg-pink-500 hover:bg-pink-600 text-white font-semibold w-full py-2 mt-3 rounded"
+            >
+              {loadingPay
+                ? "Processing..."
+                : `Complete Demo Payment ($ ${order.totalPrice})`}
+            </button>
           </div>
         )}
 
