@@ -21,6 +21,9 @@
   ],
   "author": "Ankit Pareek <2024kuec2077@iiitkota.ac.in>",
   "license": "ISC",
+  "engines": {
+    "node": "22.x"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ankitpareek4955/e-commerce.git"

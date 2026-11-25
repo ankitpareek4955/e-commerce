@@ -17,12 +17,12 @@ const ProductCarousel = () => {
 
   const settings = {
     dots: false,
-    infinite: true,
+    infinite: (products?.length || 0) > 1,
     speed: 500,
     slidesToShow: 1,
     slidesToScroll: 1,
     arrows: true,
-    autoplay: true,
+    autoplay: (products?.length || 0) > 1,
     autoplaySpeed: 3000,
   };
 
@@ -32,7 +32,7 @@ const ProductCarousel = () => {
         <Message variant="danger">
           {error?.data?.message || error.error}
         </Message>
-      ) : (
+      ) : !products?.length ? null : (
         <Slider
           {...settings}
           className="xl:w-[50rem]  lg:w-[50rem] md:w-[56rem] sm:w-[40rem] sm:block"
