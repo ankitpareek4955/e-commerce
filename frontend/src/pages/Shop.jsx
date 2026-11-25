@@ -9,6 +9,7 @@ import {
   setChecked,
 } from "../redux/features/shop/shopSlice";
 import Loader from "../components/Loader";
+import Message from "../components/Message";
 import ProductCard from "./Products/ProductCard";
 
 const Shop = () => {
@@ -26,14 +27,17 @@ const Shop = () => {
   });
 
   useEffect(() => {
-    if (!categoriesQuery.isLoading) {
+    if (!categoriesQuery.isLoading && categoriesQuery.data) {
       dispatch(setCategories(categoriesQuery.data));
     }
-  }, [categoriesQuery.data, dispatch]);
+  }, [categoriesQuery.data, categoriesQuery.isLoading, dispatch]);
 
   useEffect(() => {
     if (!checked.length || !radio.length) {
-      if (!filteredProductsQuery.isLoading) {
+      if (
+        !filteredProductsQuery.isLoading &&
+        Array.isArray(filteredProductsQuery.data)
+      ) {
         // Filter products based on both checked categories and price filter
         const filteredProducts = filteredProductsQuery.data.filter(
           (product) => {
@@ -48,7 +52,14 @@ const Shop = () => {
         dispatch(setProducts(filteredProducts));
       }
     }
-  }, [checked, radio, filteredProductsQuery.data, dispatch, priceFilter]);
+  }, [
+    checked,
+    radio,
+    filteredProductsQuery.data,
+    filteredProductsQuery.isLoading,
+    dispatch,
+    priceFilter,
+  ]);
 
   const handleBrandClick = (brand) => {
     const productsByBrand = filteredProductsQuery.data?.filter(
@@ -165,8 +176,16 @@ const Shop = () => {
           <div className="p-3">
             <h2 className="h4 text-center mb-2">{products?.length} Products</h2>
             <div className="flex flex-wrap">
-              {products.length === 0 ? (
+              {filteredProductsQuery.isLoading ? (
                 <Loader />
+              ) : filteredProductsQuery.isError ? (
+                <Message variant="danger">
+                  {filteredProductsQuery.error?.data?.message ||
+                    filteredProductsQuery.error?.error ||
+                    "Failed to load products"}
+                </Message>
+              ) : products.length === 0 ? (
+                <p className="text-gray-400 p-4">No products found.</p>
               ) : (
                 products?.map((p) => (
                   <div className="p-3" key={p._id}>

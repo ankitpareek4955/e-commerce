@@ -22,7 +22,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.get("/api/health", (req, res) => {
-  res.status(200).json({ status: "ok", store: "Pareek Store" });
+  res.status(200).json({
+    status: "ok",
+    store: "Pareek Store",
+    dbConfigured: Boolean(process.env.MONGO_URI),
+  });
 });
 
 // Ensure MongoDB is connected before handling API requests (serverless-safe).
